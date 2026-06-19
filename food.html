@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#edf4f2">
+<title>FODMAP</title>
+<style>
+:root {
+  --bg1:#eef7f3;
+  --bg2:#f8f2e8;
+  --bg3:#e9eefb;
+  --glass:rgba(255,255,255,.46);
+  --glass2:rgba(255,255,255,.30);
+  --stroke:rgba(255,255,255,.68);
+  --text:#17201c;
+  --muted:rgba(23,32,28,.58);
+  --green:#16784d;
+  --red:#b23a33;
+  --greenSoft:rgba(62,165,104,.18);
+  --redSoft:rgba(214,78,66,.17);
+  --shadow:0 24px 70px rgba(44,59,53,.16);
+}
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { min-height:100%; }
+body {
+  margin:0;
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Segoe UI",Roboto,Arial,sans-serif;
+  background:
+    radial-gradient(circle at 20% 5%, rgba(116,210,151,.42) 0, transparent 28%),
+    radial-gradient(circle at 90% 8%, rgba(121,151,226,.34) 0, transparent 30%),
+    radial-gradient(circle at 50% 100%, rgba(250,198,118,.38) 0, transparent 35%),
+    linear-gradient(145deg,var(--bg1),var(--bg2) 52%,var(--bg3));
+  background-attachment:fixed;
+}
+body:before {
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px),linear-gradient(90deg,rgba(255,255,255,.14) 1px,transparent 1px);
+  background-size:42px 42px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.45),transparent 70%);
+}
+.app {
+  max-width:760px;
+  min-height:100vh;
+  margin:0 auto;
+  padding:clamp(18px,4vw,34px) 16px 34px;
+}
+.top {
+  padding:10px 2px 18px;
+}
+.brand {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 11px;
+  border:1px solid var(--stroke);
+  border-radius:999px;
+  background:rgba(255,255,255,.32);
+  backdrop-filter:blur(22px) saturate(150%);
+  box-shadow:0 10px 32px rgba(70,80,73,.08);
+  color:var(--muted);
+  font-weight:760;
+  font-size:13px;
+}
+.dot {
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#2aa668,#f0bd5a,#c84b43);
+}
+h1 {
+  margin:18px 0 6px;
+  max-width:620px;
+  font-size:clamp(42px,9vw,74px);
+  line-height:.9;
+  letter-spacing:-.075em;
+  font-weight:860;
+}
+.sub {
+  margin:0;
+  max-width:540px;
+  color:var(--muted);
+  font-size:17px;
+  line-height:1.35;
+}
+.searchShell {
+  position:sticky;
+  top:0;
+  z-index:20;
+  padding:10px 0 13px;
+  margin:2px 0 4px;
+}
+.search {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-height:68px;
+  padding:0 19px;
+  border:1px solid var(--stroke);
+  border-radius:30px;
+  background:linear-gradient(135deg,rgba(255,255,255,.64),rgba(255,255,255,.26));
+  backdrop-filter:blur(34px) saturate(170%);
+  -webkit-backdrop-filter:blur(34px) saturate(170%);
+  box-shadow:var(--shadow), inset 0 1px 1px rgba(255,255,255,.75);
+}
+.search svg {
+  width:25px;
+  height:25px;
+  color:rgba(23,32,28,.42);
+  flex:0 0 auto;
+}
+#q {
+  width:100%;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--text);
+  font-size:22px;
+  font-weight:650;
+  letter-spacing:-.035em;
+}
+#q::placeholder { color:rgba(23,32,28,.36); }
+.clear {
+  display:none;
+  border:0;
+  background:rgba(255,255,255,.42);
+  color:rgba(23,32,28,.48);
+  border-radius:50%;
+  width:34px;
+  height:34px;
+  font-size:20px;
+  line-height:1;
+}
+.clusters {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin:13px 0 18px;
+}
+.cluster {
+  min-height:74px;
+  border:1px solid var(--stroke);
+  border-radius:26px;
+  background:linear-gradient(145deg,rgba(255,255,255,.52),rgba(255,255,255,.20));
+  backdrop-filter:blur(28px) saturate(155%);
+  -webkit-backdrop-filter:blur(28px) saturate(155%);
+  box-shadow:0 18px 45px rgba(45,60,52,.10), inset 0 1px 1px rgba(255,255,255,.68);
+  color:var(--text);
+  text-align:left;
+  padding:13px 12px;
+  font-size:15px;
+  font-weight:810;
+  letter-spacing:-.025em;
+}
+.cluster span {
+  display:block;
+  margin-top:5px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:650;
+  letter-spacing:0;
+}
+.cluster.active {
+  background:rgba(23,32,28,.84);
+  color:white;
+  border-color:rgba(255,255,255,.34);
+}
+.cluster.active span { color:rgba(255,255,255,.64); }
+.status {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin:4px 4px 10px;
+  color:var(--muted);
+  font-size:14px;
+  font-weight:680;
+}
+.toggle {
+  display:flex;
+  gap:6px;
+  padding:5px;
+  border:1px solid var(--stroke);
+  border-radius:999px;
+  background:rgba(255,255,255,.28);
+  backdrop-filter:blur(22px);
+}
+.toggle button {
+  border:0;
+  border-radius:999px;
+  padding:8px 11px;
+  background:transparent;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:780;
+}
+.toggle button.active {
+  background:rgba(255,255,255,.72);
+  color:var(--text);
+  box-shadow:0 8px 24px rgba(50,60,54,.08);
+}
+.list {
+  display:grid;
+  gap:10px;
+}
+.card {
+  display:grid;
+  grid-template-columns:58px 1fr;
+  gap:13px;
+  align-items:center;
+  padding:12px;
+  border:1px solid var(--stroke);
+  border-radius:28px;
+  background:linear-gradient(135deg,rgba(255,255,255,.58),rgba(255,255,255,.24));
+  backdrop-filter:blur(30px) saturate(160%);
+  -webkit-backdrop-filter:blur(30px) saturate(160%);
+  box-shadow:0 18px 50px rgba(45,60,52,.10), inset 0 1px 1px rgba(255,255,255,.72);
+}
+.score {
+  height:56px;
+  border-radius:21px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:-.05em;
+  background:rgba(255,255,255,.36);
+}
+.good .score { color:var(--green); background:var(--greenSoft); }
+.bad .score { color:var(--red); background:var(--redSoft); }
+.name {
+  font-size:18px;
+  font-weight:840;
+  line-height:1.12;
+  letter-spacing:-.035em;
+}
+.note {
+  margin-top:6px;
+  color:var(--muted);
+  font-size:13.5px;
+  line-height:1.32;
+}
+.meta {
+  margin-top:8px;
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+}
+.pill {
+  padding:5px 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.36);
+  color:rgba(23,32,28,.56);
+  font-size:12px;
+  font-weight:720;
+}
+.good .pill:first-child { color:var(--green); background:var(--greenSoft); }
+.bad .pill:first-child { color:var(--red); background:var(--redSoft); }
+.empty {
+  display:none;
+  padding:38px 24px;
+  text-align:center;
+  border:1px solid var(--stroke);
+  border-radius:30px;
+  background:rgba(255,255,255,.34);
+  backdrop-filter:blur(26px);
+  color:var(--muted);
+  box-shadow:var(--shadow);
+}
+.empty b {
+  display:block;
+  color:var(--text);
+  font-size:24px;
+  letter-spacing:-.05em;
+  margin-bottom:7px;
+}
+.hint {
+  margin:17px 3px 0;
+  color:rgba(23,32,28,.48);
+  font-size:12.5px;
+  line-height:1.38;
+}
+mark {
+  background:rgba(255,221,104,.55);
+  color:inherit;
+  border-radius:6px;
+  padding:0 2px;
+}
+@media(max-width:620px) {
+  .clusters { grid-template-columns:repeat(2,1fr); }
+  .cluster { min-height:70px; border-radius:24px; }
+  .search { min-height:64px; border-radius:28px; }
+  #q { font-size:20px; }
+  .status { align-items:flex-start; gap:10px; }
+  .card { border-radius:26px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="top">
+    <div class="brand"><span class="dot"></span> FODMAP</div>
+    <h1>Suchen. Essen. Einordnen.</h1>
+    <p class="sub">Einfach eintippen. Die App zeigt sofort, was meist gut geht und was eher kritisch ist.</p>
+  </section>
+
+  <section class="searchShell">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M10.8 18.1a7.3 7.3 0 1 1 0-14.6 7.3 7.3 0 0 1 0 14.6Z" stroke="currentColor" stroke-width="2"/><path d="m16.2 16.2 4.3 4.3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <input id="q" placeholder="Lebensmittel oder E-Nummer…" autocomplete="off" autofocus>
+      <button class="clear" id="clear" aria-label="Suche löschen">×</button>
+    </div>
+  </section>
+
+  <section class="clusters">
+    <button class="cluster" data-cluster="carbs">Kohlenhydrate<span>Reis, Brot, Pasta</span></button>
+    <button class="cluster" data-cluster="protein">Proteine<span>Fleisch, Fisch, Tofu</span></button>
+    <button class="cluster" data-cluster="plants">Obst & Gemüse<span>Apfel, Zwiebel, Salat</span></button>
+    <button class="cluster" data-cluster="sweet">Süßes & Zusätze<span>E420, Inulin, Sirup</span></button>
+  </section>
+
+  <section class="status">
+    <div id="count">0 Treffer</div>
+    <div class="toggle">
+      <button data-filter="all" class="active">Alle</button>
+      <button data-filter="good">Gut</button>
+      <button data-filter="bad">Meiden</button>
+    </div>
+  </section>
+
+  <main>
+    <div id="list" class="list"></div>
+    <div id="empty" class="empty"><b>Nichts gefunden</b>Versuche ein einfaches Wort wie „Milch“, „Zucker“, „E420“, „Apfel“ oder „Zwiebel“.</div>
+    <div class="hint">+10 = meist sehr gut. -10 = häufig problematisch. Portion, Reifegrad und Zutatenliste bleiben wichtig.</div>
+  </main>
+</div>
+
+<script>
+const FOODS = [{"score": "+10", "name": "Reis weiß", "cat": "Stärke", "note": "Basmati, Jasmin, Sushi-Reis", "aliases": "basmati jasmin sushi reis"}, {"score": "+10", "name": "Reis braun", "cat": "Stärke", "note": "Naturreis", "aliases": "vollkornreis"}, {"score": "+10", "name": "Kartoffeln", "cat": "Stärke", "note": "gekocht, gebacken, püriert", "aliases": "erdäpfel"}, {"score": "+10", "name": "Kartoffelchips nature", "cat": "Snack", "note": "ohne Zwiebel-/Knoblauchpulver", "aliases": "chips"}, {"score": "+10", "name": "Reiswaffeln", "cat": "Snack", "note": "ohne Honig/Inulin", "aliases": "reis cracker"}, {"score": "+10", "name": "Eier", "cat": "Protein", "note": "keine FODMAPs", "aliases": "ei omelette rührei"}, {"score": "+10", "name": "Hähnchen natur", "cat": "Protein", "note": "ohne Panade/Marinade", "aliases": "poulet huhn chicken"}, {"score": "+10", "name": "Pute natur", "cat": "Protein", "note": "ohne Panade/Marinade", "aliases": "truthahn turkey"}, {"score": "+10", "name": "Rindfleisch natur", "cat": "Protein", "note": "ohne Panade/Marinade", "aliases": "beef"}, {"score": "+10", "name": "Schweinefleisch natur", "cat": "Protein", "note": "ohne Panade/Marinade", "aliases": "pork"}, {"score": "+10", "name": "Lamm natur", "cat": "Protein", "note": "ohne Panade/Marinade", "aliases": "lamb"}, {"score": "+10", "name": "Fisch natur", "cat": "Protein", "note": "keine FODMAPs", "aliases": "lachs kabeljau forelle thunfisch"}, {"score": "+10", "name": "Meeresfrüchte natur", "cat": "Protein", "note": "Garnelen, Muscheln, Tintenfisch", "aliases": "shrimps garnelen muscheln seafood"}, {"score": "+10", "name": "Tofu fest", "cat": "Protein", "note": "fester Tofu, abgetropft", "aliases": "firm tofu"}, {"score": "+10", "name": "Tempeh", "cat": "Protein", "note": "meist gut in moderater Portion", "aliases": "soja fermentiert"}, {"score": "+10", "name": "Öl", "cat": "Fett", "note": "Olivenöl, Rapsöl, Sonnenblumenöl", "aliases": "fett"}, {"score": "+10", "name": "Olivenöl mit Knoblaucharoma", "cat": "Fett", "note": "Aroma im Öl meist ok, keine Knoblauchstücke", "aliases": "garlic infused oil"}, {"score": "+10", "name": "Butter", "cat": "Fett", "note": "kleine normale Mengen", "aliases": "butterschmalz"}, {"score": "+10", "name": "Ghee", "cat": "Fett", "note": "praktisch laktosefrei", "aliases": "butterreinfett"}, {"score": "+10", "name": "Zucker", "cat": "Süßes", "note": "normale Menge", "aliases": "saccharose"}, {"score": "+10", "name": "Ahornsirup", "cat": "Süßes", "note": "besser als Honig/Agave", "aliases": "maple syrup"}, {"score": "+10", "name": "Dextrose", "cat": "Süßes", "note": "Glukose", "aliases": "traubenzucker glucose"}, {"score": "+10", "name": "Wasser", "cat": "Getränk", "note": "", "aliases": ""}, {"score": "+10", "name": "Kaffee schwarz", "cat": "Getränk", "note": "kann Darm reizen, aber nicht FODMAP", "aliases": "espresso americano"}, {"score": "+10", "name": "Grüner Tee", "cat": "Getränk", "note": "", "aliases": "tee"}, {"score": "+10", "name": "Schwarzer Tee", "cat": "Getränk", "note": "", "aliases": "tee"}, {"score": "+10", "name": "Pfefferminztee", "cat": "Getränk", "note": "", "aliases": "minze tee"}, {"score": "+10", "name": "Laktosefreie Milch", "cat": "Milch", "note": "statt normaler Milch", "aliases": "milch lactose free"}, {"score": "+10", "name": "Hartkäse", "cat": "Milch", "note": "Parmesan, Cheddar, Gruyère", "aliases": "parmesan cheddar gruyere greyerzer"}, {"score": "+9", "name": "Quinoa", "cat": "Stärke", "note": "gekocht", "aliases": ""}, {"score": "+9", "name": "Polenta", "cat": "Stärke", "note": "Maisgrieß", "aliases": "maisgrieß"}, {"score": "+9", "name": "Mais-Tortilla", "cat": "Stärke", "note": "aus Mais, nicht Weizen", "aliases": "tortilla corn"}, {"score": "+9", "name": "Glutenfreie Pasta", "cat": "Stärke", "note": "Reis/Mais/Quinoa-Basis", "aliases": "nudeln pasta"}, {"score": "+9", "name": "Buchweizen", "cat": "Stärke", "note": "gekocht oder als Mehl", "aliases": "buckwheat"}, {"score": "+9", "name": "Hirse", "cat": "Stärke", "note": "gekocht", "aliases": "millet"}, {"score": "+9", "name": "Tapioka", "cat": "Stärke", "note": "Stärke", "aliases": ""}, {"score": "+9", "name": "Reisnudeln", "cat": "Stärke", "note": "typisch gut", "aliases": "rice noodles"}, {"score": "+9", "name": "Soba 100% Buchweizen", "cat": "Stärke", "note": "nur wenn ohne Weizen", "aliases": "soba"}, {"score": "+9", "name": "Haferflocken", "cat": "Stärke", "note": "Portion beachten", "aliases": "oats porridge"}, {"score": "+9", "name": "Karotten", "cat": "Gemüse", "note": "roh oder gekocht", "aliases": "möhren"}, {"score": "+9", "name": "Gurke", "cat": "Gemüse", "note": "", "aliases": "cucumber"}, {"score": "+9", "name": "Spinat", "cat": "Gemüse", "note": "", "aliases": ""}, {"score": "+9", "name": "Blattsalat", "cat": "Gemüse", "note": "Kopf-, Eisberg-, Römer-, Feldsalat", "aliases": "salat lettuce"}, {"score": "+9", "name": "Tomaten", "cat": "Gemüse", "note": "frisch oder passiert ohne Zwiebel/Knoblauch", "aliases": "tomate"}, {"score": "+9", "name": "Paprika rot", "cat": "Gemüse", "note": "", "aliases": "peperoni"}, {"score": "+9", "name": "Paprika gelb", "cat": "Gemüse", "note": "", "aliases": "peperoni"}, {"score": "+9", "name": "Paprika grün", "cat": "Gemüse", "note": "", "aliases": "peperoni"}, {"score": "+9", "name": "Zucchini", "cat": "Gemüse", "note": "Portion beachten", "aliases": "courgette"}, {"score": "+9", "name": "Aubergine", "cat": "Gemüse", "note": "", "aliases": "eggplant"}, {"score": "+9", "name": "Bambussprossen", "cat": "Gemüse", "note": "", "aliases": "bamboo"}, {"score": "+9", "name": "Bohnen grün", "cat": "Gemüse", "note": "Portion beachten", "aliases": "grüne bohnen"}, {"score": "+9", "name": "Pak Choi", "cat": "Gemüse", "note": "", "aliases": "bok choy"}, {"score": "+9", "name": "Mangold", "cat": "Gemüse", "note": "", "aliases": ""}, {"score": "+9", "name": "Kürbis Hokkaido", "cat": "Gemüse", "note": "Portion beachten", "aliases": "kürbis pumpkin"}, {"score": "+9", "name": "Radieschen", "cat": "Gemüse", "note": "", "aliases": ""}, {"score": "+9", "name": "Rettich", "cat": "Gemüse", "note": "", "aliases": ""}, {"score": "+9", "name": "Oliven", "cat": "Gemüse", "note": "", "aliases": ""}, {"score": "+9", "name": "Ingwer", "cat": "Gewürz", "note": "", "aliases": ""}, {"score": "+9", "name": "Basilikum", "cat": "Gewürz", "note": "", "aliases": ""}, {"score": "+9", "name": "Petersilie", "cat": "Gewürz", "note": "", "aliases": ""}, {"score": "+9", "name": "Koriander", "cat": "Gewürz", "note": "", "aliases": "cilantro"}, {"score": "+9", "name": "Dill", "cat": "Gewürz", "note": "", "aliases": ""}, {"score": "+9", "name": "Rosmarin", "cat": "Gewürz", "note": "", "aliases": ""}, {"score": "+9", "name": "Thymian", "cat": "Gewürz", "note": "", "aliases": ""}, {"score": "+9", "name": "Oregano", "cat": "Gewürz", "note": "", "aliases": ""}, {"score": "+9", "name": "Schnittlauch", "cat": "Gewürz", "note": "gute Zwiebel-Alternative", "aliases": ""}, {"score": "+9", "name": "Frühlingszwiebel grün", "cat": "Gewürz", "note": "nur grüner Teil", "aliases": "spring onion scallion"}, {"score": "+9", "name": "Lauch grün", "cat": "Gewürz", "note": "nur grüner Teil", "aliases": "porree"}, {"score": "+9", "name": "Zitrone", "cat": "Obst", "note": "Saft/Schale", "aliases": ""}, {"score": "+9", "name": "Limette", "cat": "Obst", "note": "Saft/Schale", "aliases": ""}, {"score": "+9", "name": "Orange", "cat": "Obst", "note": "", "aliases": "apfelsine"}, {"score": "+9", "name": "Mandarine", "cat": "Obst", "note": "", "aliases": "clementine"}, {"score": "+9", "name": "Kiwi", "cat": "Obst", "note": "", "aliases": ""}, {"score": "+9", "name": "Erdbeeren", "cat": "Obst", "note": "", "aliases": "strawberry"}, {"score": "+9", "name": "Blaubeeren", "cat": "Obst", "note": "Portion beachten", "aliases": "heidelbeeren blueberries"}, {"score": "+9", "name": "Himbeeren", "cat": "Obst", "note": "Portion beachten", "aliases": "raspberries"}, {"score": "+9", "name": "Trauben", "cat": "Obst", "note": "", "aliases": "weintrauben grapes"}, {"score": "+9", "name": "Ananas", "cat": "Obst", "note": "Portion beachten", "aliases": "pineapple"}, {"score": "+9", "name": "Cantaloupe-Melone", "cat": "Obst", "note": "nicht Wassermelone", "aliases": "melon"}, {"score": "+9", "name": "Honigmelone", "cat": "Obst", "note": "Portion beachten", "aliases": "galia"}, {"score": "+9", "name": "Banane eher unreif", "cat": "Obst", "note": "nicht überreif", "aliases": "banana"}, {"score": "+9", "name": "Passionsfrucht", "cat": "Obst", "note": "", "aliases": "maracuja"}, {"score": "+9", "name": "Rhabarber", "cat": "Obst", "note": "eigentlich Gemüse, meist gut", "aliases": ""}, {"score": "+9", "name": "Erdnüsse", "cat": "Nüsse", "note": "kleine Portion", "aliases": "peanuts"}, {"score": "+9", "name": "Walnüsse", "cat": "Nüsse", "note": "kleine Portion", "aliases": ""}, {"score": "+9", "name": "Macadamia", "cat": "Nüsse", "note": "kleine Portion", "aliases": ""}, {"score": "+9", "name": "Pekannüsse", "cat": "Nüsse", "note": "kleine Portion", "aliases": "pecan"}, {"score": "+9", "name": "Pinienkerne", "cat": "Nüsse", "note": "kleine Portion", "aliases": ""}, {"score": "+9", "name": "Kürbiskerne", "cat": "Nüsse", "note": "kleine Portion", "aliases": ""}, {"score": "+9", "name": "Chiasamen", "cat": "Nüsse", "note": "kleine Portion", "aliases": ""}, {"score": "+9", "name": "Leinsamen", "cat": "Nüsse", "note": "kleine Portion", "aliases": ""}, {"score": "+9", "name": "Sesam", "cat": "Nüsse", "note": "kleine Portion", "aliases": ""}, {"score": "+9", "name": "Sonnenblumenkerne", "cat": "Nüsse", "note": "kleine Portion", "aliases": ""}, {"score": "+9", "name": "Laktosefreier Joghurt", "cat": "Milch", "note": "ohne Inulin/Fruktose-Sirup", "aliases": ""}, {"score": "+9", "name": "Skyr laktosefrei", "cat": "Milch", "note": "ohne Inulin", "aliases": ""}, {"score": "+9", "name": "Mozzarella", "cat": "Milch", "note": "Portion beachten", "aliases": ""}, {"score": "+9", "name": "Feta", "cat": "Milch", "note": "Portion beachten", "aliases": ""}, {"score": "+9", "name": "Brie", "cat": "Milch", "note": "kleine Portion meist ok", "aliases": ""}, {"score": "+9", "name": "Camembert", "cat": "Milch", "note": "kleine Portion meist ok", "aliases": ""}, {"score": "+9", "name": "Mayonnaise", "cat": "Sauce", "note": "ohne Knoblauch/Zwiebel", "aliases": "mayo"}, {"score": "+9", "name": "Senf", "cat": "Sauce", "note": "Zutaten prüfen", "aliases": "mustard"}, {"score": "+9", "name": "Sojasauce", "cat": "Sauce", "note": "kleine Menge", "aliases": ""}, {"score": "+9", "name": "Tamari", "cat": "Sauce", "note": "kleine Menge", "aliases": ""}, {"score": "+9", "name": "Essig", "cat": "Sauce", "note": "Balsamico/Weißwein/Apfel: Portion beachten", "aliases": "vinegar"}, {"score": "+9", "name": "Erdnussbutter", "cat": "Süßes/Snack", "note": "kleine Portion, ohne Inulin", "aliases": "peanut butter"}, {"score": "+9", "name": "Dunkle Schokolade", "cat": "Süßes", "note": "kleine Portion", "aliases": "schoggi"}, {"score": "+8", "name": "Süßkartoffel", "cat": "Stärke", "note": "kleine Portion", "aliases": "sweet potato"}, {"score": "+8", "name": "Maiskolben", "cat": "Gemüse", "note": "kleine Portion", "aliases": "mais corn"}, {"score": "+8", "name": "Brokkoli Köpfe", "cat": "Gemüse", "note": "eher Köpfe als Stiel", "aliases": ""}, {"score": "+8", "name": "Rotkohl", "cat": "Gemüse", "note": "Portion beachten", "aliases": "blaukraut"}, {"score": "+8", "name": "Weißkohl", "cat": "Gemüse", "note": "Portion beachten", "aliases": "kabis"}, {"score": "+8", "name": "Kohlrabi", "cat": "Gemüse", "note": "Portion beachten", "aliases": ""}, {"score": "+8", "name": "Fenchel", "cat": "Gemüse", "note": "Portion beachten", "aliases": ""}, {"score": "+8", "name": "Sellerie Stange", "cat": "Gemüse", "note": "kleine Portion", "aliases": "stangensellerie"}, {"score": "+8", "name": "Avocado kleine Portion", "cat": "Obst/Fett", "note": "nur kleine Menge", "aliases": ""}, {"score": "+8", "name": "Granatapfelkerne", "cat": "Obst", "note": "kleine Portion", "aliases": ""}, {"score": "+8", "name": "Kokosmilch", "cat": "Milch/Fett", "note": "kleine Portion", "aliases": ""}, {"score": "+8", "name": "Mandelmilch", "cat": "Milch", "note": "ohne Inulin", "aliases": ""}, {"score": "+8", "name": "Reismilch", "cat": "Milch", "note": "ohne Inulin", "aliases": ""}, {"score": "+8", "name": "Mandeln", "cat": "Nüsse", "note": "kleine Portion", "aliases": ""}, {"score": "+8", "name": "Haselnüsse", "cat": "Nüsse", "note": "kleine Portion", "aliases": ""}, {"score": "+8", "name": "Kakaopulver", "cat": "Süßes", "note": "kleine Portion", "aliases": ""}, {"score": "+8", "name": "Popcorn natur", "cat": "Snack", "note": "ohne Honig/Inulin", "aliases": ""}, {"score": "+7", "name": "Edamame", "cat": "Protein", "note": "kleine Portion", "aliases": ""}, {"score": "+7", "name": "Kichererbsen aus Dose gespült", "cat": "Hülsenfrüchte", "note": "kleine Portion besser als trocken gekocht", "aliases": ""}, {"score": "+7", "name": "Linsen aus Dose gespült", "cat": "Hülsenfrüchte", "note": "kleine Portion besser als trocken gekocht", "aliases": ""}, {"score": "+7", "name": "Hafermilch", "cat": "Milch", "note": "Portion und Marke prüfen", "aliases": ""}, {"score": "+7", "name": "Kefir laktosefrei", "cat": "Milch", "note": "ohne Inulin", "aliases": ""}, {"score": "+7", "name": "Joghurt griechisch", "cat": "Milch", "note": "kleine Portion, Laktose beachten", "aliases": ""}, {"score": "+7", "name": "Sauerteig Dinkel", "cat": "Stärke", "note": "Portion und Rezept stark relevant", "aliases": "brot"}, {"score": "+7", "name": "Sauerteig Weizen", "cat": "Stärke", "note": "manche vertragen kleine Portion", "aliases": "brot"}, {"score": "+7", "name": "Grüne Banane", "cat": "Obst", "note": "eher gut, Reifegrad wichtig", "aliases": ""}, {"score": "+7", "name": "Cranberries frisch", "cat": "Obst", "note": "Portion beachten", "aliases": ""}, {"score": "+7", "name": "Marmelade low-FODMAP Frucht", "cat": "Süßes", "note": "ohne Apfel-/Birnensaft", "aliases": ""}, {"score": "-10", "name": "Knoblauch", "cat": "Gemüse/Gewürz", "note": "sehr viel Fruktane", "aliases": "garlic"}, {"score": "-10", "name": "Knoblauchpulver", "cat": "Gewürz", "note": "sehr konzentriert", "aliases": ""}, {"score": "-10", "name": "Zwiebeln", "cat": "Gemüse/Gewürz", "note": "sehr viel Fruktane", "aliases": "onion"}, {"score": "-10", "name": "Zwiebelpulver", "cat": "Gewürz", "note": "sehr konzentriert", "aliases": ""}, {"score": "-10", "name": "Schalotten", "cat": "Gemüse/Gewürz", "note": "Fruktane", "aliases": ""}, {"score": "-10", "name": "Lauch weißer Teil", "cat": "Gemüse/Gewürz", "note": "Fruktane", "aliases": "porree"}, {"score": "-10", "name": "Frühlingszwiebel weiß", "cat": "Gemüse/Gewürz", "note": "Fruktane", "aliases": ""}, {"score": "-10", "name": "Inulin", "cat": "Zusatzstoff", "note": "häufig in Proteinriegeln, Joghurt, Müesli", "aliases": "chicory root fiber"}, {"score": "-10", "name": "Chicorée-Wurzelfaser", "cat": "Zusatzstoff", "note": "Inulin/Fruktane", "aliases": ""}, {"score": "-10", "name": "Fructo-Oligosaccharide", "cat": "Zusatzstoff", "note": "FOS/Fruktane", "aliases": "fos"}, {"score": "-10", "name": "Weizenkleie", "cat": "Getreide", "note": "Fruktane", "aliases": ""}, {"score": "-10", "name": "Roggenbrot", "cat": "Getreide", "note": "Fruktane", "aliases": "roggen"}, {"score": "-10", "name": "Gerste", "cat": "Getreide", "note": "Fruktane", "aliases": "barley"}, {"score": "-10", "name": "Weizenbrot", "cat": "Getreide", "note": "Fruktane", "aliases": "brot"}, {"score": "-10", "name": "Weizenpasta", "cat": "Getreide", "note": "Fruktane", "aliases": "nudeln pasta spaghetti"}, {"score": "-10", "name": "Couscous", "cat": "Getreide", "note": "Weizen/Fruktane", "aliases": ""}, {"score": "-10", "name": "Bulgur", "cat": "Getreide", "note": "Weizen/Fruktane", "aliases": ""}, {"score": "-10", "name": "Gnocchi mit Weizen", "cat": "Stärke", "note": "oft Weizen + Zusätze", "aliases": ""}, {"score": "-10", "name": "Äpfel", "cat": "Obst", "note": "Fruktose/Sorbit", "aliases": "apfel apple"}, {"score": "-10", "name": "Birnen", "cat": "Obst", "note": "Fruktose/Sorbit", "aliases": "pear"}, {"score": "-10", "name": "Wassermelone", "cat": "Obst", "note": "Fruktose/Mannit", "aliases": "watermelon"}, {"score": "-10", "name": "Mango", "cat": "Obst", "note": "Fruktose", "aliases": ""}, {"score": "-10", "name": "Kirschen", "cat": "Obst", "note": "Fruktose/Sorbit", "aliases": ""}, {"score": "-10", "name": "Datteln", "cat": "Obst", "note": "konzentrierte FODMAPs", "aliases": ""}, {"score": "-10", "name": "Feigen getrocknet", "cat": "Obst", "note": "konzentrierte FODMAPs", "aliases": ""}, {"score": "-10", "name": "Rosinen", "cat": "Obst", "note": "konzentrierte FODMAPs", "aliases": ""}, {"score": "-10", "name": "Trockenfrüchte", "cat": "Obst", "note": "konzentrierte FODMAPs", "aliases": ""}, {"score": "-10", "name": "Honig", "cat": "Süßes", "note": "Fruktose", "aliases": ""}, {"score": "-10", "name": "Agavendicksaft", "cat": "Süßes", "note": "Fruktose", "aliases": "agave"}, {"score": "-10", "name": "High-Fructose-Corn-Syrup", "cat": "Zusatzstoff", "note": "Fruktose", "aliases": "hfcs maissirup glucose fructose syrup"}, {"score": "-10", "name": "Sorbit E420", "cat": "Süßstoff", "note": "Polyol", "aliases": ""}, {"score": "-10", "name": "Mannit E421", "cat": "Süßstoff", "note": "Polyol", "aliases": ""}, {"score": "-10", "name": "Xylit E967", "cat": "Süßstoff", "note": "Polyol", "aliases": ""}, {"score": "-10", "name": "Maltit E965", "cat": "Süßstoff", "note": "Polyol", "aliases": ""}, {"score": "-10", "name": "Isomalt E953", "cat": "Süßstoff", "note": "Polyol", "aliases": ""}, {"score": "-10", "name": "Milch normal", "cat": "Milch", "note": "Laktose", "aliases": "kuhmilch"}, {"score": "-10", "name": "Ziegenmilch", "cat": "Milch", "note": "Laktose", "aliases": ""}, {"score": "-10", "name": "Schafmilch", "cat": "Milch", "note": "Laktose", "aliases": ""}, {"score": "-10", "name": "Kondensmilch", "cat": "Milch", "note": "viel Laktose", "aliases": ""}, {"score": "-10", "name": "Eiscreme", "cat": "Milch", "note": "Laktose, oft Zusätze", "aliases": "glace"}, {"score": "-10", "name": "Joghurt normal", "cat": "Milch", "note": "Laktose", "aliases": ""}, {"score": "-10", "name": "Frischkäse", "cat": "Milch", "note": "Laktose je nach Portion", "aliases": ""}, {"score": "-10", "name": "Ricotta", "cat": "Milch", "note": "Laktose", "aliases": ""}, {"score": "-10", "name": "Hüttenkäse", "cat": "Milch", "note": "Laktose", "aliases": "cottage cheese"}, {"score": "-10", "name": "Cashews", "cat": "Nüsse", "note": "GOS", "aliases": ""}, {"score": "-10", "name": "Pistazien", "cat": "Nüsse", "note": "GOS", "aliases": ""}, {"score": "-9", "name": "Linsen trocken gekocht", "cat": "Hülsenfrüchte", "note": "GOS", "aliases": ""}, {"score": "-9", "name": "Kichererbsen trocken gekocht", "cat": "Hülsenfrüchte", "note": "GOS", "aliases": ""}, {"score": "-9", "name": "Kidneybohnen", "cat": "Hülsenfrüchte", "note": "GOS", "aliases": ""}, {"score": "-9", "name": "Schwarze Bohnen", "cat": "Hülsenfrüchte", "note": "GOS", "aliases": ""}, {"score": "-9", "name": "Weiße Bohnen", "cat": "Hülsenfrüchte", "note": "GOS", "aliases": ""}, {"score": "-9", "name": "Sojabohnen", "cat": "Hülsenfrüchte", "note": "GOS", "aliases": ""}, {"score": "-9", "name": "Seidentofu", "cat": "Protein", "note": "GOS", "aliases": "silken tofu"}, {"score": "-9", "name": "Blumenkohl", "cat": "Gemüse", "note": "Mannit", "aliases": ""}, {"score": "-9", "name": "Champignons", "cat": "Gemüse", "note": "Mannit", "aliases": "pilze mushroom"}, {"score": "-9", "name": "Portobello", "cat": "Gemüse", "note": "Mannit", "aliases": "pilze"}, {"score": "-9", "name": "Spargel", "cat": "Gemüse", "note": "Fruktane", "aliases": ""}, {"score": "-9", "name": "Artischocke", "cat": "Gemüse", "note": "Fruktane", "aliases": ""}, {"score": "-9", "name": "Rosenkohl", "cat": "Gemüse", "note": "Fruktane", "aliases": ""}, {"score": "-9", "name": "Erbsen", "cat": "Gemüse", "note": "GOS/Fruktane", "aliases": ""}, {"score": "-9", "name": "Zuckerschoten", "cat": "Gemüse", "note": "Fruktose/Fruktane", "aliases": ""}, {"score": "-9", "name": "Rote Bete", "cat": "Gemüse", "note": "Portion oft problematisch", "aliases": "randen"}, {"score": "-9", "name": "Pfirsich", "cat": "Obst", "note": "Sorbit", "aliases": ""}, {"score": "-9", "name": "Nektarine", "cat": "Obst", "note": "Sorbit", "aliases": ""}, {"score": "-9", "name": "Aprikose", "cat": "Obst", "note": "Sorbit", "aliases": ""}, {"score": "-9", "name": "Pflaume", "cat": "Obst", "note": "Sorbit", "aliases": "zwetschge"}, {"score": "-9", "name": "Brombeeren", "cat": "Obst", "note": "Sorbit", "aliases": ""}, {"score": "-9", "name": "Grapefruit große Portion", "cat": "Obst", "note": "Portion relevant", "aliases": ""}, {"score": "-9", "name": "Apfelsaft", "cat": "Getränk", "note": "Fruktose/Sorbit", "aliases": ""}, {"score": "-9", "name": "Birnensaft", "cat": "Getränk", "note": "Fruktose/Sorbit", "aliases": ""}, {"score": "-9", "name": "Smoothie mit Apfel/Birne", "cat": "Getränk", "note": "Fruktose/Sorbit", "aliases": ""}, {"score": "-9", "name": "Fruchtsaftmix", "cat": "Getränk", "note": "oft Apfel/Birne/Fruktose", "aliases": ""}, {"score": "-9", "name": "Energy-Riegel mit Inulin", "cat": "Snack", "note": "Inulin/Chicorée-Faser", "aliases": "proteinriegel"}, {"score": "-9", "name": "Proteinriegel mit Polyolen", "cat": "Snack", "note": "Sorbit/Maltit/Xylit", "aliases": ""}, {"score": "-9", "name": "Müesli mit Trockenfrüchten", "cat": "Snack", "note": "Trockenfrüchte/Inulin möglich", "aliases": "muesli"}, {"score": "-9", "name": "Granola mit Honig/Inulin", "cat": "Snack", "note": "Honig/Inulin möglich", "aliases": ""}, {"score": "-9", "name": "Ketchup mit Zwiebel/Knoblauch", "cat": "Sauce", "note": "Zutaten prüfen", "aliases": ""}, {"score": "-9", "name": "BBQ-Sauce", "cat": "Sauce", "note": "oft Knoblauch/Zwiebel/Honig", "aliases": ""}, {"score": "-9", "name": "Fertigsauce", "cat": "Sauce", "note": "oft Zwiebel/Knoblauch/Inulin", "aliases": ""}, {"score": "-9", "name": "Bouillon mit Zwiebel/Knoblauch", "cat": "Sauce", "note": "Pulver/Würfel prüfen", "aliases": "brühe stock"}, {"score": "-9", "name": "Wurst mit Knoblauch", "cat": "Protein", "note": "Zutaten prüfen", "aliases": "salami"}, {"score": "-9", "name": "Panierte Nuggets", "cat": "Protein", "note": "Weizen/Zwiebel/Knoblauch möglich", "aliases": ""}, {"score": "-8", "name": "Avocado große Portion", "cat": "Obst/Fett", "note": "Sorbit", "aliases": ""}, {"score": "-8", "name": "Mais große Portion", "cat": "Gemüse", "note": "Portion relevant", "aliases": ""}, {"score": "-8", "name": "Brokkoli Stiel", "cat": "Gemüse", "note": "problematischer als Köpfe", "aliases": ""}, {"score": "-8", "name": "Kohl große Portion", "cat": "Gemüse", "note": "Portion relevant", "aliases": "kabis"}, {"score": "-8", "name": "Süßkartoffel große Portion", "cat": "Stärke", "note": "Mannit/Portion", "aliases": ""}, {"score": "-8", "name": "Brot mit Inulin", "cat": "Getreide", "note": "Zutatenliste prüfen", "aliases": ""}, {"score": "-8", "name": "Glutenfreies Brot mit Apfelfaser/Inulin", "cat": "Getreide", "note": "glutenfrei heißt nicht automatisch low-FODMAP", "aliases": ""}, {"score": "-8", "name": "Mandelmehl große Portion", "cat": "Nüsse", "note": "Portion relevant", "aliases": ""}, {"score": "-8", "name": "Kokosmehl", "cat": "Stärke", "note": "Portion oft problematisch", "aliases": ""}, {"score": "-8", "name": "Kokoswasser", "cat": "Getränk", "note": "Portion relevant", "aliases": ""}, {"score": "-8", "name": "Rum mit Fruchtsaft", "cat": "Getränk", "note": "Mixer oft problematisch", "aliases": ""}, {"score": "-8", "name": "Milchschokolade", "cat": "Süßes", "note": "Laktose/Portion", "aliases": ""}, {"score": "-8", "name": "Sahne große Portion", "cat": "Milch", "note": "Laktose/Portion", "aliases": "rahm cream"}, {"score": "-8", "name": "Crème fraîche große Portion", "cat": "Milch", "note": "Laktose/Portion", "aliases": ""}, {"score": "-8", "name": "Fertigmarinade", "cat": "Sauce", "note": "oft Knoblauch/Zwiebel/Honig", "aliases": ""}, {"score": "-8", "name": "Salatdressing fertig", "cat": "Sauce", "note": "oft Knoblauch/Zwiebel/Honig", "aliases": ""}, {"score": "+9", "name": "Ahornsirup", "cat": "Süßungsmittel", "note": "Süßungsmittel, FODMAP-arm", "aliases": "maple syrup"}, {"score": "+9", "name": "Brauner Zucker", "cat": "Süßungsmittel", "note": "Süßungsmittel, FODMAP-arm", "aliases": "brown sugar"}, {"score": "+9", "name": "Dextrose", "cat": "Süßungsmittel", "note": "Traubenzucker, FODMAP-arm", "aliases": "glucose traubenzucker"}, {"score": "+9", "name": "Glukose", "cat": "Süßungsmittel", "note": "Traubenzucker, FODMAP-arm", "aliases": "glucose dextrose"}, {"score": "+9", "name": "Haushaltszucker", "cat": "Süßungsmittel", "note": "Saccharose, FODMAP-arm", "aliases": "zucker table sugar"}, {"score": "+9", "name": "Melasse", "cat": "Süßungsmittel", "note": "Süßungsmittel, FODMAP-arm", "aliases": "molasses"}, {"score": "+9", "name": "Puderzucker", "cat": "Süßungsmittel", "note": "Süßungsmittel, FODMAP-arm", "aliases": "icing sugar"}, {"score": "+9", "name": "Reissirup", "cat": "Süßungsmittel", "note": "Süßungsmittel, FODMAP-arm", "aliases": "rice syrup"}, {"score": "+9", "name": "Rohrzucker", "cat": "Süßungsmittel", "note": "Saccharose, FODMAP-arm", "aliases": "cane sugar saccharose"}, {"score": "+9", "name": "Traubenzucker", "cat": "Süßungsmittel", "note": "Glukose/Dextrose, FODMAP-arm", "aliases": "dextrose glucose"}, {"score": "+9", "name": "Zuckerrübensirup", "cat": "Süßungsmittel", "note": "Süßungsmittel, FODMAP-arm", "aliases": "beet syrup"}, {"score": "+9", "name": "Zuckersirup", "cat": "Süßungsmittel", "note": "Süßungsmittel, FODMAP-arm", "aliases": "simple syrup"}, {"score": "-10", "name": "Agavensirup", "cat": "Süßungsmittel", "note": "FODMAP-reich, viel Fruktose", "aliases": "agave agavendicksaft"}, {"score": "-10", "name": "Birnendicksaft", "cat": "Süßungsmittel", "note": "FODMAP-reich, Fruktose/Sorbit", "aliases": "pear syrup"}, {"score": "-10", "name": "Dattelsirup", "cat": "Süßungsmittel", "note": "FODMAP-reich, konzentrierte Fruktane/Fruktose", "aliases": "date syrup"}, {"score": "-10", "name": "Fruktose", "cat": "Süßungsmittel", "note": "Fruchtzucker, FODMAP-reich", "aliases": "fructose fruchtzucker"}, {"score": "-10", "name": "Fruktosesirup", "cat": "Süßungsmittel", "note": "FODMAP-reich", "aliases": "fructose syrup"}, {"score": "-10", "name": "Glukose-Fruktose-Sirup", "cat": "Süßungsmittel", "note": "GFS, FODMAP-reich", "aliases": "gfs glucose fructose syrup"}, {"score": "-10", "name": "High-Fruktose-Corn-Sirup", "cat": "Süßungsmittel", "note": "HFCS, FODMAP-reich", "aliases": "hfcs high fructose corn syrup"}, {"score": "-10", "name": "Honig", "cat": "Süßungsmittel", "note": "FODMAP-reich, viel Fruktose", "aliases": "honey"}, {"score": "-10", "name": "Invertzucker", "cat": "Süßungsmittel", "note": "FODMAP-reich", "aliases": "invert sugar"}, {"score": "-10", "name": "Kokosblütenzucker", "cat": "Süßungsmittel", "note": "FODMAP-reich", "aliases": "coconut sugar"}, {"score": "-10", "name": "Laktose", "cat": "Süßungsmittel", "note": "Milchzucker, FODMAP-reich", "aliases": "milchzucker lactose"}, {"score": "-10", "name": "Maissirup", "cat": "Süßungsmittel", "note": "FODMAP-reich", "aliases": "corn syrup"}, {"score": "+9", "name": "Acesulfam-K", "cat": "Süßstoff", "note": "E 950, FODMAP-arm", "aliases": "acesulfame potassium E950"}, {"score": "+9", "name": "Aspartam", "cat": "Süßstoff", "note": "E 951, FODMAP-arm", "aliases": "aspartame E951"}, {"score": "+9", "name": "Aspartam-Acesulfam", "cat": "Süßstoff", "note": "E 962, FODMAP-arm", "aliases": "aspartame acesulfame E962"}, {"score": "+9", "name": "Cyclamat", "cat": "Süßstoff", "note": "E 952, FODMAP-arm", "aliases": "cyclamate E952"}, {"score": "+9", "name": "Neohesperidin", "cat": "Süßstoff", "note": "E 959, FODMAP-arm", "aliases": "neohesperidine E959"}, {"score": "+9", "name": "Neotam", "cat": "Süßstoff", "note": "E 961, FODMAP-arm", "aliases": "neotame E961"}, {"score": "+9", "name": "Saccharin", "cat": "Süßstoff", "note": "E 954, FODMAP-arm", "aliases": "saccharine E954"}, {"score": "+9", "name": "Stevia", "cat": "Süßstoff", "note": "E 960, FODMAP-arm", "aliases": "steviol glycosides E960"}, {"score": "+9", "name": "Sucralose", "cat": "Süßstoff", "note": "E 955, FODMAP-arm", "aliases": "sucralose E955"}, {"score": "+9", "name": "Thaumatin", "cat": "Süßstoff", "note": "E 957, FODMAP-arm", "aliases": "thaumatin E957"}, {"score": "-10", "name": "Erythrit", "cat": "Süßstoff", "note": "E 968, Zuckeralkohol/Polyol, FODMAP-reich", "aliases": "erythritol E968"}, {"score": "-10", "name": "Glycerol", "cat": "Süßstoff", "note": "E 422, Zuckeralkohol/Polyol, FODMAP-reich", "aliases": "glycerin glycerol E422"}, {"score": "-10", "name": "Isomalt", "cat": "Süßstoff", "note": "E 953, Zuckeralkohol/Polyol, FODMAP-reich", "aliases": "isomaltol E953"}, {"score": "-10", "name": "Lactit", "cat": "Süßstoff", "note": "E 966, Zuckeralkohol/Polyol, FODMAP-reich", "aliases": "lactitol E966"}, {"score": "-10", "name": "Maltit", "cat": "Süßstoff", "note": "E 965, Zuckeralkohol/Polyol, FODMAP-reich", "aliases": "maltitol E965"}, {"score": "-10", "name": "Mannit", "cat": "Süßstoff", "note": "E 421, Zuckeralkohol/Polyol, FODMAP-reich", "aliases": "mannitol E421"}, {"score": "-10", "name": "Sorbit", "cat": "Süßstoff", "note": "E 420, Zuckeralkohol/Polyol, FODMAP-reich", "aliases": "sorbitol E420"}, {"score": "-10", "name": "Xylit", "cat": "Süßstoff", "note": "E 967, Zuckeralkohol/Polyol, FODMAP-reich", "aliases": "xylitol birkenzucker E967"}];
+let filter = "all";
+let cluster = "";
+const q = document.getElementById("q");
+const list = document.getElementById("list");
+const count = document.getElementById("count");
+const empty = document.getElementById("empty");
+const clearBtn = document.getElementById("clear");
+const clusterButtons = [...document.querySelectorAll(".cluster")];
+const filterButtons = [...document.querySelectorAll(".toggle button")];
+
+const CLUSTERS = {
+  carbs: ["Stärke","Getreide","Kohlenhydrate"],
+  protein: ["Protein"],
+  plants: ["Gemüse","Obst","Gewürz","Nüsse"],
+  sweet: ["Süß","Süßstoff","Süßungsmittel","Zusatzstoff","Sauce","Snack","Getränk"]
+};
+
+function scoreNum(s) { return parseInt(s,10); }
+function cls(f) { return f.score.startsWith("+") ? "good" : "bad"; }
+function verdict(f) { return f.score.startsWith("+") ? "meist gut" : "eher meiden"; }
+function esc(s) { return (s || "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+function hi(text, term) {
+  text = esc(text || "");
+  if (!term) return text;
+  const first = term.split(/\s+/).filter(Boolean)[0];
+  if (!first) return text;
+  const r = new RegExp("(" + first.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "ig");
+  return text.replace(r, "<mark>$1</mark>");
+}
+function matchCluster(f) {
+  if (!cluster) return true;
+  return CLUSTERS[cluster].some(c => f.cat.toLowerCase().includes(c.toLowerCase()));
+}
+function matchSearch(f, words) {
+  const hay = (f.name+" "+f.cat+" "+f.note+" "+f.aliases).toLowerCase().replace(/\s/g,"");
+  return words.every(w => hay.includes(w.replace(/\s/g,"")));
+}
+function render() {
+  const term = q.value.trim().toLowerCase();
+  const words = term.split(/\s+/).filter(Boolean);
+  let rows = FOODS.filter(f => {
+    if (words.length && !matchSearch(f, words)) return false;
+    if (!matchCluster(f)) return false;
+    if (filter === "good" && !f.score.startsWith("+")) return false;
+    if (filter === "bad" && !f.score.startsWith("-")) return false;
+    return true;
+  });
+  rows.sort((a,b) => scoreNum(b.score) - scoreNum(a.score) || a.name.localeCompare(b.name, "de"));
+  clearBtn.style.display = q.value ? "block" : "none";
+  count.textContent = rows.length + " Treffer";
+  empty.style.display = rows.length ? "none" : "block";
+  list.innerHTML = rows.map(f => `
+    <article class="card ${cls(f)}">
+      <div class="score">${f.score}</div>
+      <div>
+        <div class="name">${hi(f.name, term)}</div>
+        ${f.note ? `<div class="note">${hi(f.note, term)}</div>` : ""}
+        <div class="meta">
+          <span class="pill">${verdict(f)}</span>
+          <span class="pill">${esc(f.cat)}</span>
+        </div>
+      </div>
+    </article>`).join("");
+}
+clusterButtons.forEach(b => b.addEventListener("click", () => {
+  cluster = cluster === b.dataset.cluster ? "" : b.dataset.cluster;
+  clusterButtons.forEach(x => x.classList.toggle("active", x.dataset.cluster === cluster));
+  render();
+}));
+filterButtons.forEach(b => b.addEventListener("click", () => {
+  filter = b.dataset.filter;
+  filterButtons.forEach(x => x.classList.toggle("active", x.dataset.filter === filter));
+  render();
+}));
+clearBtn.addEventListener("click", () => {
+  q.value = "";
+  q.focus();
+  render();
+});
+q.addEventListener("input", render);
+window.addEventListener("load", () => setTimeout(() => q.focus(), 80));
+render();
+</script>
+</body>
+</html>

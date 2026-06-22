@@ -1,0 +1,444 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FODMAP Lebensmittel-Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--green:#1a7f4b;--green-bg:#e8f7ef;--green-dot:#22c55e;
+--yellow:#92610a;--yellow-bg:#fef9e7;--yellow-dot:#f59e0b;
+--red:#b91c1c;--red-bg:#fef2f2;--red-dot:#ef4444;
+--border:#e5e7eb;--text:#111827;--muted:#6b7280;--surface:#f9fafb;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:var(--text);min-height:100vh}
+header{padding:2.5rem 1.5rem 1rem;max-width:720px;margin:0 auto}
+h1{font-size:1.6rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:.25rem}
+.subtitle{color:var(--muted);font-size:.9rem}
+.search-wrap{max-width:720px;margin:1rem auto 0;padding:0 1.5rem}
+.search-box{position:relative}
+.search-box input{width:100%;padding:.85rem 1rem .85rem 2.75rem;font-size:1rem;border:1.5px solid var(--border);border-radius:12px;outline:none;background:#fff;color:var(--text);transition:border-color .15s}
+.search-box input:focus{border-color:#6366f1}
+.search-box svg{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.filters{display:flex;gap:.5rem;margin-top:.85rem;flex-wrap:wrap}
+.filter-btn{padding:.35rem .85rem;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:.82rem;cursor:pointer;color:var(--muted);transition:all .15s;font-weight:500}
+.filter-btn.active-all{border-color:#6366f1;background:#6366f1;color:#fff}
+.filter-btn.active-green{border-color:var(--green-dot);background:var(--green-dot);color:#fff}
+.filter-btn.active-yellow{border-color:var(--yellow-dot);background:var(--yellow-dot);color:#fff}
+.filter-btn.active-red{border-color:var(--red-dot);background:var(--red-dot);color:#fff}
+.legend{display:flex;gap:1.25rem;flex-wrap:wrap;margin-top:.85rem;padding:.7rem 1rem;background:var(--surface);border-radius:10px;border:1px solid var(--border)}
+.legend-item{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.results{max-width:720px;margin:1.25rem auto 3rem;padding:0 1.5rem}
+.count{font-size:.82rem;color:var(--muted);margin-bottom:.85rem}
+.grid{display:grid;gap:.5rem}
+.card{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border:1px solid var(--border);border-radius:10px;background:#fff;transition:border-color .15s}
+.card:hover{border-color:#c7d2fe}
+.card-left{display:flex;align-items:center;gap:.75rem}
+.card-icon{font-size:1.3rem;width:32px;text-align:center;flex-shrink:0}
+.food-name{font-weight:500;font-size:.95rem}
+.food-meta{font-size:.78rem;color:var(--muted);margin-top:.1rem}
+.card-right{display:flex;align-items:center;gap:.75rem;flex-shrink:0}
+.badge{padding:.25rem .65rem;border-radius:20px;font-size:.75rem;font-weight:600;letter-spacing:.01em}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-yellow{background:var(--yellow-bg);color:var(--yellow)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.status-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.sd-green{background:var(--green-dot)}
+.sd-yellow{background:var(--yellow-dot)}
+.sd-red{background:var(--red-dot)}
+.section-label{font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:.5rem 0 .25rem;margin-top:.5rem}
+.empty{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.empty-icon{font-size:2.5rem;margin-bottom:.75rem}
+.portion{font-size:.75rem;color:var(--muted);max-width:160px;text-align:right;line-height:1.3}
+@media(max-width:500px){.portion{display:none}.card-right{gap:.5rem}}
+</style>
+</head>
+<body>
+<header>
+<h1>🥦 FODMAP Guide</h1>
+<p class="subtitle">Über 230 Lebensmittel — basierend auf Monash University Daten</p>
+</header>
+
+<div class="search-wrap">
+<div class="search-box">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+<input type="text" id="search" placeholder="Lebensmittel suchen… z.B. Apfel, Milch, Zwiebel" autofocus autocomplete="off">
+</div>
+<div class="filters">
+<button class="filter-btn active-all" onclick="setFilter('all',this)">Alle</button>
+<button class="filter-btn" onclick="setFilter('green',this)">🟢 Grün – unbedenklich</button>
+<button class="filter-btn" onclick="setFilter('yellow',this)">🟡 Gelb – kleine Portion</button>
+<button class="filter-btn" onclick="setFilter('red',this)">🔴 Rot – meiden</button>
+</div>
+</div>
+
+<div class="results">
+<div class="count" id="count"></div>
+<div class="grid" id="grid"></div>
+</div>
+
+<script>
+const foods=[
+// FRÜCHTE
+{n:"Apfel",cat:"Früchte",icon:"🍎",status:"red",fodmap:"Fructose, Sorbit",portion:"Lieber meiden"},
+{n:"Apfelmus",cat:"Früchte",icon:"🍎",status:"red",fodmap:"Fructose, Sorbit",portion:"Meiden"},
+{n:"Aprikose",cat:"Früchte",icon:"🍑",status:"red",fodmap:"Sorbit, Fructose",portion:"Meiden"},
+{n:"Avocado",cat:"Früchte",icon:"🥑",status:"yellow",fodmap:"Sorbit",portion:"⅛ Avocado (30 g)"},
+{n:"Banane (reif)",cat:"Früchte",icon:"🍌",status:"red",fodmap:"Fructooligosaccharide",portion:"Meiden"},
+{n:"Banane (unreif)",cat:"Früchte",icon:"🍌",status:"green",fodmap:"–",portion:"1 mittelgroß"},
+{n:"Blaubeeren",cat:"Früchte",icon:"🫐",status:"green",fodmap:"–",portion:"bis 28 g"},
+{n:"Brombeeren",cat:"Früchte",icon:"🫐",status:"yellow",fodmap:"Polyole",portion:"10 Stück (50 g)"},
+{n:"Cantaloupe-Melone",cat:"Früchte",icon:"🍈",status:"green",fodmap:"–",portion:"½ Tasse"},
+{n:"Clementine",cat:"Früchte",icon:"🍊",status:"green",fodmap:"–",portion:"1 Stück"},
+{n:"Cranberries (frisch)",cat:"Früchte",icon:"🍒",status:"green",fodmap:"–",portion:"1 EL"},
+{n:"Datteln (getrocknet)",cat:"Früchte",icon:"🌴",status:"red",fodmap:"Fructose, Fructane",portion:"Meiden"},
+{n:"Feigen (getrocknet)",cat:"Früchte",icon:"🫐",status:"red",fodmap:"Fructose, Polyole",portion:"Meiden"},
+{n:"Feigen (frisch)",cat:"Früchte",icon:"🫐",status:"red",fodmap:"Fructose",portion:"Meiden"},
+{n:"Granatapfel",cat:"Früchte",icon:"🍎",status:"yellow",fodmap:"Fructose, Fructane",portion:"45 g"},
+{n:"Grapefruit",cat:"Früchte",icon:"🍊",status:"yellow",fodmap:"Fructane",portion:"½ Stück"},
+{n:"Grüne Trauben",cat:"Früchte",icon:"🍇",status:"green",fodmap:"–",portion:"10 Stück"},
+{n:"Guave",cat:"Früchte",icon:"🍐",status:"red",fodmap:"Fructose",portion:"Meiden"},
+{n:"Heidelbeeren",cat:"Früchte",icon:"🫐",status:"green",fodmap:"–",portion:"¼ Tasse"},
+{n:"Himbeeren",cat:"Früchte",icon:"🍓",status:"green",fodmap:"–",portion:"10 Stück"},
+{n:"Honigmelone",cat:"Früchte",icon:"🍈",status:"yellow",fodmap:"Fructose",portion:"90 g"},
+{n:"Jackfrucht",cat:"Früchte",icon:"🍈",status:"yellow",fodmap:"Fructane",portion:"40 g"},
+{n:"Kaki",cat:"Früchte",icon:"🍊",status:"red",fodmap:"Fructose, Sorbit",portion:"Meiden"},
+{n:"Kiwi",cat:"Früchte",icon:"🥝",status:"green",fodmap:"–",portion:"2 Stück"},
+{n:"Kokosnuss (frisch)",cat:"Früchte",icon:"🥥",status:"green",fodmap:"–",portion:"½ Tasse"},
+{n:"Kumquat",cat:"Früchte",icon:"🍊",status:"green",fodmap:"–",portion:"3 Stück"},
+{n:"Lemon / Zitrone",cat:"Früchte",icon:"🍋",status:"green",fodmap:"–",portion:"Saft und Schale"},
+{n:"Limette",cat:"Früchte",icon:"🍋",status:"green",fodmap:"–",portion:"Saft frei"},
+{n:"Litschi",cat:"Früchte",icon:"🍒",status:"yellow",fodmap:"Fructose",portion:"5 Stück"},
+{n:"Mango",cat:"Früchte",icon:"🥭",status:"red",fodmap:"Fructose",portion:"Meiden"},
+{n:"Mandarine",cat:"Früchte",icon:"🍊",status:"green",fodmap:"–",portion:"2 Stück"},
+{n:"Melone (Wassermelone)",cat:"Früchte",icon:"🍉",status:"red",fodmap:"Fructose, Polyole",portion:"Meiden"},
+{n:"Nashi-Birne",cat:"Früchte",icon:"🍐",status:"red",fodmap:"Fructose, Sorbit",portion:"Meiden"},
+{n:"Orange",cat:"Früchte",icon:"🍊",status:"green",fodmap:"–",portion:"1 mittel"},
+{n:"Papaya",cat:"Früchte",icon:"🍈",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Pampelmuse",cat:"Früchte",icon:"🍊",status:"yellow",fodmap:"Fructane",portion:"½"},
+{n:"Passionsfrucht",cat:"Früchte",icon:"🌺",status:"green",fodmap:"–",portion:"1 Stück"},
+{n:"Pfirsich",cat:"Früchte",icon:"🍑",status:"red",fodmap:"Fructose, Sorbit",portion:"Meiden"},
+{n:"Pflaumen",cat:"Früchte",icon:"🫐",status:"red",fodmap:"Sorbit, Fructose",portion:"Meiden"},
+{n:"Pflaumensaft",cat:"Früchte",icon:"🍹",status:"red",fodmap:"Sorbit",portion:"Meiden"},
+{n:"Physalis",cat:"Früchte",icon:"🍊",status:"green",fodmap:"–",portion:"5 Stück"},
+{n:"Birne",cat:"Früchte",icon:"🍐",status:"red",fodmap:"Fructose, Sorbit",portion:"Meiden"},
+{n:"Ananas",cat:"Früchte",icon:"🍍",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Preiselbeere",cat:"Früchte",icon:"🍒",status:"red",fodmap:"Polyole",portion:"Meiden (Saft ok in 125 ml)"},
+{n:"Quitte",cat:"Früchte",icon:"🍐",status:"red",fodmap:"Sorbit",portion:"Meiden"},
+{n:"Rhabarber",cat:"Früchte",icon:"🌿",status:"green",fodmap:"–",portion:"1 Stängel"},
+{n:"Rosinen / Sultaninen",cat:"Früchte",icon:"🍇",status:"red",fodmap:"Fructose",portion:"Meiden"},
+{n:"Sauerkirschen",cat:"Früchte",icon:"🍒",status:"red",fodmap:"Sorbit, Fructose",portion:"Meiden"},
+{n:"Sternfrucht",cat:"Früchte",icon:"⭐",status:"green",fodmap:"–",portion:"1 mittel"},
+{n:"Tamarinde",cat:"Früchte",icon:"🌿",status:"red",fodmap:"Fructose",portion:"Meiden"},
+{n:"Weintrauben (rot)",cat:"Früchte",icon:"🍇",status:"green",fodmap:"–",portion:"10 Stück"},
+{n:"Zwetschge",cat:"Früchte",icon:"🫐",status:"red",fodmap:"Sorbit",portion:"Meiden"},
+{n:"Erdbeere",cat:"Früchte",icon:"🍓",status:"green",fodmap:"–",portion:"10 Stück"},
+{n:"Kirsche",cat:"Früchte",icon:"🍒",status:"red",fodmap:"Sorbit, Fructose",portion:"Meiden"},
+
+// GEMÜSE
+{n:"Artischocke",cat:"Gemüse",icon:"🥬",status:"red",fodmap:"Fructane, GOS",portion:"Meiden"},
+{n:"Aubergine",cat:"Gemüse",icon:"🍆",status:"green",fodmap:"–",portion:"beliebig"},
+{n:"Avocado-Öl",cat:"Gemüse",icon:"🫒",status:"green",fodmap:"–",portion:"frei"},
+{n:"Blumenkohl",cat:"Gemüse",icon:"🥦",status:"yellow",fodmap:"Polyole, GOS",portion:"½ Tasse (75 g)"},
+{n:"Bohnen (weiß, Dose)",cat:"Gemüse",icon:"🫘",status:"red",fodmap:"GOS, Fructane",portion:"Meiden"},
+{n:"Bohnen (grün/Schnitt-)",cat:"Gemüse",icon:"🫘",status:"green",fodmap:"–",portion:"75 g"},
+{n:"Bok Choy",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Brokkoli (Röschen)",cat:"Gemüse",icon:"🥦",status:"green",fodmap:"–",portion:"¾ Tasse"},
+{n:"Brokkoli (Stiel)",cat:"Gemüse",icon:"🥦",status:"yellow",fodmap:"Fructane",portion:"½ Tasse"},
+{n:"Brokkolini (Köpfe)",cat:"Gemüse",icon:"🥦",status:"green",fodmap:"–",portion:"½ Tasse"},
+{n:"Brokkolini (ganz)",cat:"Gemüse",icon:"🥦",status:"yellow",fodmap:"Fructane",portion:"½ Tasse"},
+{n:"Butternut-Kürbis",cat:"Gemüse",icon:"🎃",status:"yellow",fodmap:"Fructane, Polyole",portion:"¼ Tasse (40 g)"},
+{n:"Champignons",cat:"Gemüse",icon:"🍄",status:"red",fodmap:"Polyole (Mannitol)",portion:"Meiden"},
+{n:"Chicorée",cat:"Gemüse",icon:"🥬",status:"yellow",fodmap:"Fructane",portion:"1 Blatt"},
+{n:"Chili (frisch, rot)",cat:"Gemüse",icon:"🌶️",status:"green",fodmap:"–",portion:"frei"},
+{n:"Erbsen (frisch)",cat:"Gemüse",icon:"🫛",status:"yellow",fodmap:"GOS, Fructane",portion:"¼ Tasse (35 g)"},
+{n:"Erbsen (Tiefkühl)",cat:"Gemüse",icon:"🫛",status:"yellow",fodmap:"GOS",portion:"¼ Tasse"},
+{n:"Fenchel (Zwiebel)",cat:"Gemüse",icon:"🌿",status:"yellow",fodmap:"Fructane",portion:"½ Tasse (45 g)"},
+{n:"Fenchel (Blätter)",cat:"Gemüse",icon:"🌿",status:"green",fodmap:"–",portion:"frei"},
+{n:"Frühlingszwiebel (grüner Teil)",cat:"Gemüse",icon:"🧅",status:"green",fodmap:"–",portion:"frei"},
+{n:"Frühlingszwiebel (weißer Teil)",cat:"Gemüse",icon:"🧅",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Gurke",cat:"Gemüse",icon:"🥒",status:"green",fodmap:"–",portion:"frei"},
+{n:"Hokkaido-Kürbis",cat:"Gemüse",icon:"🎃",status:"green",fodmap:"–",portion:"½ Tasse"},
+{n:"Ingwer (frisch)",cat:"Gemüse",icon:"🫚",status:"green",fodmap:"–",portion:"frei"},
+{n:"Jicama",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Karotte",cat:"Gemüse",icon:"🥕",status:"green",fodmap:"–",portion:"frei"},
+{n:"Kartoffel",cat:"Gemüse",icon:"🥔",status:"green",fodmap:"–",portion:"frei"},
+{n:"Knoblauch",cat:"Gemüse",icon:"🧄",status:"red",fodmap:"Fructane",portion:"Meiden (Öl ok)"},
+{n:"Knollensellerie",cat:"Gemüse",icon:"🥬",status:"yellow",fodmap:"Fructane",portion:"⅓ Tasse (75 g)"},
+{n:"Kohl (Weißkohl)",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Kohl (Rotkohl)",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Kohl (Rotkohl, fermentiert)",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"½ Tasse"},
+{n:"Kohl (Savoyer)",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"½ Tasse"},
+{n:"Kohlrabi",cat:"Gemüse",icon:"🥬",status:"yellow",fodmap:"GOS, Fructane",portion:"¼ Tasse"},
+{n:"Kräuterseitling",cat:"Gemüse",icon:"🍄",status:"yellow",fodmap:"Mannitol",portion:"2 Stück"},
+{n:"Kürbis (Hokkaido)",cat:"Gemüse",icon:"🎃",status:"green",fodmap:"–",portion:"½ Tasse"},
+{n:"Lauch",cat:"Gemüse",icon:"🧅",status:"yellow",fodmap:"Fructane",portion:"¼ Tasse (25 g)"},
+{n:"Linsen (grün, Dose, abgespült)",cat:"Gemüse",icon:"🫘",status:"yellow",fodmap:"GOS",portion:"½ Tasse (100 g)"},
+{n:"Linsen (rot, Dose, abgespült)",cat:"Gemüse",icon:"🫘",status:"yellow",fodmap:"GOS",portion:"½ Tasse"},
+{n:"Maiskolben",cat:"Gemüse",icon:"🌽",status:"yellow",fodmap:"Polyole, GOS",portion:"½ Kolben"},
+{n:"Mangold",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"frei"},
+{n:"Okra",cat:"Gemüse",icon:"🫛",status:"yellow",fodmap:"GOS, Fructane",portion:"6 Schoten"},
+{n:"Olive",cat:"Gemüse",icon:"🫒",status:"green",fodmap:"–",portion:"15 Stück"},
+{n:"Pak Choi",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Paprika (rot)",cat:"Gemüse",icon:"🫑",status:"green",fodmap:"–",portion:"frei"},
+{n:"Paprika (grün)",cat:"Gemüse",icon:"🫑",status:"green",fodmap:"–",portion:"frei"},
+{n:"Pastinake",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"½ Tasse"},
+{n:"Petersilie",cat:"Gemüse",icon:"🌿",status:"green",fodmap:"–",portion:"frei"},
+{n:"Pilze (Austernpilz)",cat:"Gemüse",icon:"🍄",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Pilze (Shiitake)",cat:"Gemüse",icon:"🍄",status:"red",fodmap:"Mannitol",portion:"Meiden"},
+{n:"Pilze (Portobello)",cat:"Gemüse",icon:"🍄",status:"red",fodmap:"Mannitol",portion:"Meiden"},
+{n:"Radicchio",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"frei"},
+{n:"Radieschen",cat:"Gemüse",icon:"🌸",status:"green",fodmap:"–",portion:"frei"},
+{n:"Rosenkohl",cat:"Gemüse",icon:"🥦",status:"red",fodmap:"GOS, Fructane",portion:"Meiden"},
+{n:"Rote Bete",cat:"Gemüse",icon:"🫀",status:"yellow",fodmap:"GOS, Fructane",portion:"2 Scheiben (40 g)"},
+{n:"Rucola",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"frei"},
+{n:"Schalotte",cat:"Gemüse",icon:"🧅",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Schwarzwurzel",cat:"Gemüse",icon:"🥬",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Sellerie",cat:"Gemüse",icon:"🥬",status:"yellow",fodmap:"Polyole",portion:"¼ Stange (5 cm)"},
+{n:"Spinat (frisch)",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"frei"},
+{n:"Spargel",cat:"Gemüse",icon:"🌱",status:"red",fodmap:"Fructane",portion:"Meiden (1 Stange ok)"},
+{n:"Süsskartoffel",cat:"Gemüse",icon:"🍠",status:"yellow",fodmap:"Mannitol",portion:"½ Tasse (75 g)"},
+{n:"Tomate (Cherry)",cat:"Gemüse",icon:"🍅",status:"green",fodmap:"–",portion:"frei"},
+{n:"Tomate (groß)",cat:"Gemüse",icon:"🍅",status:"green",fodmap:"–",portion:"1 mittel"},
+{n:"Topinambur",cat:"Gemüse",icon:"🥔",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Wasserkastanie",cat:"Gemüse",icon:"🥬",status:"green",fodmap:"–",portion:"10 Stück"},
+{n:"Wasserkresson",cat:"Gemüse",icon:"🌿",status:"green",fodmap:"–",portion:"frei"},
+{n:"Wirsingkohl",cat:"Gemüse",icon:"🥬",status:"yellow",fodmap:"Fructane, GOS",portion:"½ Tasse"},
+{n:"Yam",cat:"Gemüse",icon:"🥔",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Zucchini",cat:"Gemüse",icon:"🥒",status:"green",fodmap:"–",portion:"frei"},
+{n:"Zwiebel (gelb/weiß)",cat:"Gemüse",icon:"🧅",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Zwiebel (rot)",cat:"Gemüse",icon:"🧅",status:"red",fodmap:"Fructane",portion:"Meiden"},
+
+// GETREIDE & BROT
+{n:"Amaranth",cat:"Getreide & Brot",icon:"🌾",status:"green",fodmap:"–",portion:"beliebig"},
+{n:"Buchweizen",cat:"Getreide & Brot",icon:"🌾",status:"green",fodmap:"–",portion:"frei"},
+{n:"Cornflakes (plain)",cat:"Getreide & Brot",icon:"🥣",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Dinkel-Sauerteigbrot",cat:"Getreide & Brot",icon:"🍞",status:"yellow",fodmap:"Fructane",portion:"2 Scheiben (109 g)"},
+{n:"Dinkelmehl (Weissmehl)",cat:"Getreide & Brot",icon:"🌾",status:"yellow",fodmap:"Fructane",portion:"⅔ Tasse"},
+{n:"Gerste",cat:"Getreide & Brot",icon:"🌾",status:"red",fodmap:"Fructane, GOS",portion:"Meiden"},
+{n:"Glutenfreies Brot",cat:"Getreide & Brot",icon:"🍞",status:"green",fodmap:"–",portion:"2 Scheiben"},
+{n:"Glutenfreie Pasta",cat:"Getreide & Brot",icon:"🍝",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Hafer (Haferflocken, gerollt)",cat:"Getreide & Brot",icon:"🥣",status:"yellow",fodmap:"Fructane",portion:"½ Tasse (52 g)"},
+{n:"Hafermehl",cat:"Getreide & Brot",icon:"🌾",status:"yellow",fodmap:"Fructane",portion:"½ Tasse"},
+{n:"Hirse",cat:"Getreide & Brot",icon:"🌾",status:"green",fodmap:"–",portion:"frei"},
+{n:"Knäckebrot (Reis)",cat:"Getreide & Brot",icon:"🫓",status:"green",fodmap:"–",portion:"2 Scheiben"},
+{n:"Knäckebrot (Roggen)",cat:"Getreide & Brot",icon:"🫓",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Maisgrieß / Polenta",cat:"Getreide & Brot",icon:"🌽",status:"green",fodmap:"–",portion:"frei"},
+{n:"Maismehl",cat:"Getreide & Brot",icon:"🌽",status:"green",fodmap:"–",portion:"frei"},
+{n:"Maisstärke",cat:"Getreide & Brot",icon:"🌽",status:"green",fodmap:"–",portion:"frei"},
+{n:"Müsli (glutenfrei)",cat:"Getreide & Brot",icon:"🥣",status:"green",fodmap:"–",portion:"½ Tasse"},
+{n:"Pasta (Weizen, regulär)",cat:"Getreide & Brot",icon:"🍝",status:"red",fodmap:"Fructane",portion:"Meiden (kleine Menge ok)"},
+{n:"Pasta (Weizen, ½ Tasse)",cat:"Getreide & Brot",icon:"🍝",status:"yellow",fodmap:"Fructane",portion:"½ Tasse (145 g)"},
+{n:"Quinoa",cat:"Getreide & Brot",icon:"🌾",status:"green",fodmap:"–",portion:"frei"},
+{n:"Reis (weiss)",cat:"Getreide & Brot",icon:"🍚",status:"green",fodmap:"–",portion:"frei"},
+{n:"Reis (braun)",cat:"Getreide & Brot",icon:"🍚",status:"green",fodmap:"–",portion:"frei"},
+{n:"Reisnudeln",cat:"Getreide & Brot",icon:"🍜",status:"green",fodmap:"–",portion:"frei"},
+{n:"Roggen",cat:"Getreide & Brot",icon:"🌾",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Roggenbrot",cat:"Getreide & Brot",icon:"🍞",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Sorghummehl",cat:"Getreide & Brot",icon:"🌾",status:"green",fodmap:"–",portion:"frei"},
+{n:"Tapioka",cat:"Getreide & Brot",icon:"🌾",status:"green",fodmap:"–",portion:"frei"},
+{n:"Weizenkeime",cat:"Getreide & Brot",icon:"🌾",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Weizenbrot (Vollkorn)",cat:"Getreide & Brot",icon:"🍞",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Weissbrot (Weizen)",cat:"Getreide & Brot",icon:"🍞",status:"red",fodmap:"Fructane",portion:"Meiden"},
+
+// MILCH & ALTERNATIVEN
+{n:"Buttermilch",cat:"Milch & Alternativen",icon:"🥛",status:"red",fodmap:"Laktose",portion:"Meiden"},
+{n:"Butter",cat:"Milch & Alternativen",icon:"🧈",status:"green",fodmap:"–",portion:"frei"},
+{n:"Camembert",cat:"Milch & Alternativen",icon:"🧀",status:"green",fodmap:"–",portion:"2 Scheiben"},
+{n:"Cheddar",cat:"Milch & Alternativen",icon:"🧀",status:"green",fodmap:"–",portion:"2 Scheiben"},
+{n:"Crème fraîche",cat:"Milch & Alternativen",icon:"🥛",status:"yellow",fodmap:"Laktose",portion:"1 EL (40 g)"},
+{n:"Eiscreme (regulär)",cat:"Milch & Alternativen",icon:"🍦",status:"red",fodmap:"Laktose",portion:"Meiden"},
+{n:"Eiscreme (laktosefrei)",cat:"Milch & Alternativen",icon:"🍦",status:"green",fodmap:"–",portion:"2 Kugeln"},
+{n:"Frischkäse",cat:"Milch & Alternativen",icon:"🧀",status:"yellow",fodmap:"Laktose",portion:"2 EL (40 g)"},
+{n:"Gouda",cat:"Milch & Alternativen",icon:"🧀",status:"green",fodmap:"–",portion:"2 Scheiben"},
+{n:"Gruyère",cat:"Milch & Alternativen",icon:"🧀",status:"green",fodmap:"–",portion:"2 Scheiben"},
+{n:"Hafermilch",cat:"Milch & Alternativen",icon:"🥛",status:"yellow",fodmap:"Fructane",portion:"30 ml"},
+{n:"Hüttenkäse",cat:"Milch & Alternativen",icon:"🧀",status:"red",fodmap:"Laktose",portion:"Meiden"},
+{n:"Joghurt (regulär)",cat:"Milch & Alternativen",icon:"🥛",status:"red",fodmap:"Laktose",portion:"Meiden"},
+{n:"Joghurt (laktosefrei)",cat:"Milch & Alternativen",icon:"🥛",status:"green",fodmap:"–",portion:"170 g"},
+{n:"Kefir",cat:"Milch & Alternativen",icon:"🥛",status:"red",fodmap:"Laktose",portion:"Meiden"},
+{n:"Kokosmilch (Dose)",cat:"Milch & Alternativen",icon:"🥥",status:"yellow",fodmap:"–",portion:"½ Tasse (120 ml)"},
+{n:"Kokosmilch (Tetrapack, verdünnt)",cat:"Milch & Alternativen",icon:"🥥",status:"green",fodmap:"–",portion:"1 Tasse"},
+{n:"Kuhmilch (Vollmilch)",cat:"Milch & Alternativen",icon:"🥛",status:"red",fodmap:"Laktose",portion:"Meiden"},
+{n:"Kuhmilch (laktosefrei)",cat:"Milch & Alternativen",icon:"🥛",status:"green",fodmap:"–",portion:"250 ml"},
+{n:"Mandelmilch",cat:"Milch & Alternativen",icon:"🥛",status:"green",fodmap:"–",portion:"250 ml"},
+{n:"Mascarpone",cat:"Milch & Alternativen",icon:"🧀",status:"yellow",fodmap:"Laktose",portion:"2 EL"},
+{n:"Mozzarella (frisch)",cat:"Milch & Alternativen",icon:"🧀",status:"yellow",fodmap:"Laktose",portion:"65 g"},
+{n:"Mozzarella (hart)",cat:"Milch & Alternativen",icon:"🧀",status:"green",fodmap:"–",portion:"frei"},
+{n:"Parmesan",cat:"Milch & Alternativen",icon:"🧀",status:"green",fodmap:"–",portion:"frei"},
+{n:"Quark (Magerquark)",cat:"Milch & Alternativen",icon:"🥛",status:"red",fodmap:"Laktose",portion:"Meiden"},
+{n:"Ricotta",cat:"Milch & Alternativen",icon:"🧀",status:"red",fodmap:"Laktose",portion:"Meiden"},
+{n:"Saure Sahne",cat:"Milch & Alternativen",icon:"🥛",status:"yellow",fodmap:"Laktose",portion:"2 EL (40 g)"},
+{n:"Schlagsahne",cat:"Milch & Alternativen",icon:"🥛",status:"yellow",fodmap:"Laktose",portion:"2 EL"},
+{n:"Schlagsahne (laktosefrei)",cat:"Milch & Alternativen",icon:"🥛",status:"green",fodmap:"–",portion:"frei"},
+{n:"Sojadrink (Sojaprotein)",cat:"Milch & Alternativen",icon:"🥛",status:"green",fodmap:"–",portion:"250 ml"},
+{n:"Sojadrink (ganze Sojabohne)",cat:"Milch & Alternativen",icon:"🥛",status:"red",fodmap:"GOS",portion:"Meiden"},
+{n:"Reismilch",cat:"Milch & Alternativen",icon:"🥥",status:"green",fodmap:"–",portion:"250 ml"},
+
+// EIWEISS
+{n:"Eier",cat:"Eiweiss & Fleisch",icon:"🥚",status:"green",fodmap:"–",portion:"frei"},
+{n:"Hähnchen",cat:"Eiweiss & Fleisch",icon:"🍗",status:"green",fodmap:"–",portion:"frei"},
+{n:"Rindfleisch",cat:"Eiweiss & Fleisch",icon:"🥩",status:"green",fodmap:"–",portion:"frei"},
+{n:"Schweinefleisch",cat:"Eiweiss & Fleisch",icon:"🥩",status:"green",fodmap:"–",portion:"frei"},
+{n:"Lamm",cat:"Eiweiss & Fleisch",icon:"🥩",status:"green",fodmap:"–",portion:"frei"},
+{n:"Truthahn",cat:"Eiweiss & Fleisch",icon:"🍗",status:"green",fodmap:"–",portion:"frei"},
+{n:"Lachs",cat:"Eiweiss & Fleisch",icon:"🐟",status:"green",fodmap:"–",portion:"frei"},
+{n:"Thunfisch",cat:"Eiweiss & Fleisch",icon:"🐟",status:"green",fodmap:"–",portion:"frei"},
+{n:"Garnelen",cat:"Eiweiss & Fleisch",icon:"🦐",status:"green",fodmap:"–",portion:"frei"},
+{n:"Kabeljau",cat:"Eiweiss & Fleisch",icon:"🐟",status:"green",fodmap:"–",portion:"frei"},
+{n:"Wurst (Salami, plain)",cat:"Eiweiss & Fleisch",icon:"🌭",status:"yellow",fodmap:"Fructane (durch Gewürze)",portion:"Label checken"},
+{n:"Wurst (mit Knoblauch/Zwiebel)",cat:"Eiweiss & Fleisch",icon:"🌭",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Tofu (fest)",cat:"Eiweiss & Fleisch",icon:"🫙",status:"green",fodmap:"–",portion:"frei"},
+{n:"Tofu (seidig)",cat:"Eiweiss & Fleisch",icon:"🫙",status:"yellow",fodmap:"GOS",portion:"½ Block"},
+{n:"Tempeh",cat:"Eiweiss & Fleisch",icon:"🫙",status:"green",fodmap:"–",portion:"100 g"},
+{n:"Kichererbsen (Dose, abgespült)",cat:"Eiweiss & Fleisch",icon:"🫘",status:"yellow",fodmap:"GOS, Fructane",portion:"¼ Tasse (42 g)"},
+{n:"Rote Linsen (gekocht)",cat:"Eiweiss & Fleisch",icon:"🫘",status:"yellow",fodmap:"GOS",portion:"½ Tasse"},
+{n:"Kidneybohnen (Dose)",cat:"Eiweiss & Fleisch",icon:"🫘",status:"red",fodmap:"GOS, Fructane",portion:"Meiden"},
+{n:"Edamame",cat:"Eiweiss & Fleisch",icon:"🫛",status:"yellow",fodmap:"GOS",portion:"½ Tasse"},
+
+// NÜSSE & SAMEN
+{n:"Cashews",cat:"Nüsse & Samen",icon:"🥜",status:"red",fodmap:"GOS, Fructane",portion:"Meiden"},
+{n:"Pistazien",cat:"Nüsse & Samen",icon:"🫘",status:"red",fodmap:"GOS, Fructane",portion:"Meiden"},
+{n:"Mandeln",cat:"Nüsse & Samen",icon:"🫘",status:"yellow",fodmap:"GOS, Fructane",portion:"10 Stück (12 g)"},
+{n:"Mandelbutter",cat:"Nüsse & Samen",icon:"🫙",status:"green",fodmap:"–",portion:"2 EL"},
+{n:"Erdnüsse",cat:"Nüsse & Samen",icon:"🥜",status:"green",fodmap:"–",portion:"32 Stück"},
+{n:"Erdnussbutter",cat:"Nüsse & Samen",icon:"🫙",status:"green",fodmap:"–",portion:"2 EL"},
+{n:"Haselnüsse",cat:"Nüsse & Samen",icon:"🌰",status:"yellow",fodmap:"GOS, Fructane",portion:"10 Stück (15 g)"},
+{n:"Macadamia-Nüsse",cat:"Nüsse & Samen",icon:"🫘",status:"green",fodmap:"–",portion:"20 Stück"},
+{n:"Pekannüsse",cat:"Nüsse & Samen",icon:"🌰",status:"green",fodmap:"–",portion:"10 Hälften"},
+{n:"Pinienkerne",cat:"Nüsse & Samen",icon:"🌰",status:"green",fodmap:"–",portion:"1 EL"},
+{n:"Sonnenblumenkerne",cat:"Nüsse & Samen",icon:"🌻",status:"green",fodmap:"–",portion:"2 EL"},
+{n:"Walnüsse",cat:"Nüsse & Samen",icon:"🌰",status:"green",fodmap:"–",portion:"10 Hälften"},
+{n:"Chiasamen",cat:"Nüsse & Samen",icon:"🌱",status:"green",fodmap:"–",portion:"2 EL"},
+{n:"Kürbiskerne",cat:"Nüsse & Samen",icon:"🎃",status:"green",fodmap:"–",portion:"2 EL"},
+{n:"Leinsamen",cat:"Nüsse & Samen",icon:"🌱",status:"green",fodmap:"–",portion:"1 EL"},
+{n:"Sesamkörner",cat:"Nüsse & Samen",icon:"🌱",status:"green",fodmap:"–",portion:"1 EL"},
+{n:"Sesampaste (Tahini)",cat:"Nüsse & Samen",icon:"🫙",status:"green",fodmap:"–",portion:"2 EL"},
+
+// SÜSSES & GEWÜRZE
+{n:"Agavensirup",cat:"Süsses & Gewürze",icon:"🍯",status:"red",fodmap:"Fructose",portion:"Meiden"},
+{n:"Ahornsirup",cat:"Süsses & Gewürze",icon:"🍁",status:"green",fodmap:"–",portion:"2 EL"},
+{n:"Bitterschokolade (>70%)",cat:"Süsses & Gewürze",icon:"🍫",status:"green",fodmap:"–",portion:"30 g"},
+{n:"Fruktose-Mais-Sirup (HFCS)",cat:"Süsses & Gewürze",icon:"🍬",status:"red",fodmap:"Fructose",portion:"Meiden"},
+{n:"Honig",cat:"Süsses & Gewürze",icon:"🍯",status:"red",fodmap:"Fructose",portion:"Meiden"},
+{n:"Milchschokolade",cat:"Süsses & Gewürze",icon:"🍫",status:"yellow",fodmap:"Laktose",portion:"5 Stück"},
+{n:"Reissirup",cat:"Süsses & Gewürze",icon:"🍯",status:"green",fodmap:"–",portion:"1 EL"},
+{n:"Stevia",cat:"Süsses & Gewürze",icon:"🌿",status:"green",fodmap:"–",portion:"frei"},
+{n:"Tafelzucker (Saccharose)",cat:"Süsses & Gewürze",icon:"🧂",status:"green",fodmap:"–",portion:"2 EL"},
+{n:"Xylitol",cat:"Süsses & Gewürze",icon:"🍬",status:"red",fodmap:"Polyole",portion:"Meiden"},
+{n:"Sorbit (E420)",cat:"Süsses & Gewürze",icon:"🍬",status:"red",fodmap:"Polyole",portion:"Meiden"},
+{n:"Mannit (E421)",cat:"Süsses & Gewürze",icon:"🍬",status:"red",fodmap:"Polyole",portion:"Meiden"},
+{n:"Maltit (E965)",cat:"Süsses & Gewürze",icon:"🍬",status:"red",fodmap:"Polyole",portion:"Meiden"},
+{n:"Isomalt (E953)",cat:"Süsses & Gewürze",icon:"🍬",status:"red",fodmap:"Polyole",portion:"Meiden"},
+{n:"Knoblauchpulver",cat:"Süsses & Gewürze",icon:"🧄",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Zwiebelpulver",cat:"Süsses & Gewürze",icon:"🧅",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Sojasauce",cat:"Süsses & Gewürze",icon:"🫙",status:"green",fodmap:"–",portion:"2 EL"},
+{n:"Worcestersauce",cat:"Süsses & Gewürze",icon:"🫙",status:"green",fodmap:"–",portion:"2 EL"},
+{n:"Ketchup (ohne HFCS)",cat:"Süsses & Gewürze",icon:"🍅",status:"yellow",fodmap:"Fructose",portion:"1 EL"},
+{n:"Ketchup (mit HFCS)",cat:"Süsses & Gewürze",icon:"🍅",status:"red",fodmap:"Fructose",portion:"Meiden"},
+{n:"Mayonnaise",cat:"Süsses & Gewürze",icon:"🫙",status:"green",fodmap:"–",portion:"2 EL"},
+{n:"Senf",cat:"Süsses & Gewürze",icon:"🫙",status:"green",fodmap:"–",portion:"1 EL"},
+{n:"Olivenöl",cat:"Süsses & Gewürze",icon:"🫒",status:"green",fodmap:"–",portion:"frei"},
+{n:"Kokosnussöl",cat:"Süsses & Gewürze",icon:"🥥",status:"green",fodmap:"–",portion:"frei"},
+{n:"Knoblauchöl (infusiert)",cat:"Süsses & Gewürze",icon:"🧄",status:"green",fodmap:"–",portion:"frei"},
+
+// GETRÄNKE
+{n:"Kaffee (schwarz)",cat:"Getränke",icon:"☕",status:"green",fodmap:"–",portion:"1–2 Tassen"},
+{n:"Kaffee (mit Kuhmilch)",cat:"Getränke",icon:"☕",status:"yellow",fodmap:"Laktose",portion:"Laktosefrei bevorzugen"},
+{n:"Tee (schwarz, schwach)",cat:"Getränke",icon:"🍵",status:"green",fodmap:"–",portion:"frei"},
+{n:"Tee (Pfefferminz)",cat:"Getränke",icon:"🍵",status:"green",fodmap:"–",portion:"frei"},
+{n:"Tee (Kamille)",cat:"Getränke",icon:"🍵",status:"green",fodmap:"–",portion:"frei"},
+{n:"Tee (Löwenzahn)",cat:"Getränke",icon:"🍵",status:"red",fodmap:"Fructane",portion:"Meiden"},
+{n:"Tee (Chai, stark)",cat:"Getränke",icon:"🍵",status:"yellow",fodmap:"Laktose",portion:"ohne Milch ok"},
+{n:"Wasser",cat:"Getränke",icon:"💧",status:"green",fodmap:"–",portion:"frei"},
+{n:"Apfelsaft",cat:"Getränke",icon:"🍹",status:"red",fodmap:"Fructose",portion:"Meiden"},
+{n:"Orangensaft (frisch)",cat:"Getränke",icon:"🍊",status:"yellow",fodmap:"Fructose",portion:"125 ml"},
+{n:"Bier (regulär)",cat:"Getränke",icon:"🍺",status:"yellow",fodmap:"Fructane, Polyole",portion:"330 ml"},
+{n:"Rotwein",cat:"Getränke",icon:"🍷",status:"green",fodmap:"–",portion:"150 ml"},
+{n:"Weisswein",cat:"Getränke",icon:"🥂",status:"green",fodmap:"–",portion:"150 ml"},
+{n:"Gin",cat:"Getränke",icon:"🍸",status:"green",fodmap:"–",portion:"45 ml"},
+{n:"Wodka",cat:"Getränke",icon:"🍸",status:"green",fodmap:"–",portion:"45 ml"},
+{n:"Rum",cat:"Getränke",icon:"🍸",status:"yellow",fodmap:"Fructose",portion:"in Massen"},
+{n:"Whiskey",cat:"Getränke",icon:"🥃",status:"green",fodmap:"–",portion:"45 ml"},
+{n:"Kokoswasser",cat:"Getränke",icon:"🥥",status:"yellow",fodmap:"Polyole, Sorbit",portion:"100 ml"},
+{n:"Tomatensaft",cat:"Getränke",icon:"🍅",status:"green",fodmap:"–",portion:"125 ml"},
+{n:"Reismilch",cat:"Getränke",icon:"🥛",status:"green",fodmap:"–",portion:"250 ml"},
+{n:"Energy-Drinks (zuckerfrei)",cat:"Getränke",icon:"⚡",status:"yellow",fodmap:"Polyole (Süssstoffe)",portion:"prüfen"},
+{n:"Cola (regulär, ohne HFCS)",cat:"Getränke",icon:"🥤",status:"yellow",fodmap:"–",portion:"150 ml"},
+{n:"Cola (mit HFCS, USA)",cat:"Getränke",icon:"🥤",status:"red",fodmap:"Fructose",portion:"Meiden"},
+];
+
+let activeFilter='all';
+let query='';
+
+function setFilter(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>{
+    b.className='filter-btn';
+  });
+  btn.className='filter-btn active-'+f;
+  render();
+}
+
+function render(){
+  const q=query.trim().toLowerCase();
+  let filtered=foods.filter(f=>{
+    const matchQ=!q||f.n.toLowerCase().includes(q)||f.cat.toLowerCase().includes(q)||f.fodmap.toLowerCase().includes(q);
+    const matchF=activeFilter==='all'||f.status===activeFilter;
+    return matchQ&&matchF;
+  });
+
+  const grid=document.getElementById('grid');
+  const count=document.getElementById('count');
+  count.textContent=filtered.length+' Lebensmittel';
+
+  if(!filtered.length){
+    grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>Kein Ergebnis für «'+query+'»</p></div>';
+    return;
+  }
+
+  // Group by category
+  const groups={};
+  filtered.forEach(f=>{
+    if(!groups[f.cat])groups[f.cat]=[];
+    groups[f.cat].push(f);
+  });
+
+  let html='';
+  Object.entries(groups).forEach(([cat,items])=>{
+    html+=`<div class="section-label">${cat}</div>`;
+    items.forEach(f=>{
+      const badge=f.status==='green'?'badge-green':f.status==='yellow'?'badge-yellow':'badge-red';
+      const sdot='sd-'+f.status;
+      const label=f.status==='green'?'Grün':f.status==='yellow'?'Gelb':'Rot';
+      html+=`<div class="card">
+        <div class="card-left">
+          <div class="card-icon">${f.icon}</div>
+          <div>
+            <div class="food-name">${f.n}</div>
+            <div class="food-meta">${f.fodmap}</div>
+          </div>
+        </div>
+        <div class="card-right">
+          <div class="portion">${f.portion}</div>
+          <span class="badge ${badge}">${label}</span>
+          <span class="status-dot ${sdot}"></span>
+        </div>
+      </div>`;
+    });
+  });
+  grid.innerHTML=html;
+}
+
+document.getElementById('search').addEventListener('input',function(){
+  query=this.value;
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
